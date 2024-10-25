@@ -4,6 +4,7 @@ from functools import cache
 
 from src.models import ApiResponse
 from src.agent import ChessAgent
+from src.tools import get_best_move
 
 
 @cache
@@ -21,6 +22,7 @@ def get_health():
 
 @app.post("/best-move")
 def calculate_best_move(fen: str, language: str = 'en', agent: ReActAgent = Depends(get_agent)):
+    best_move=get_best_move(fen=fen)
     prompt = f"""
         Given this position in the chessboard in FEN notation: {fen}.
         Can you provide the next best move I can do, 
@@ -30,7 +32,7 @@ def calculate_best_move(fen: str, language: str = 'en', agent: ReActAgent = Depe
     response = agent.query(prompt)
     return ApiResponse(
         message="Best move calculated succesfully",
-        data={"response": str(response)}
+        data={"response": str(response), "best_move": best_move}
     )
 
 
