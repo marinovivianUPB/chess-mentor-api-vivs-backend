@@ -5,6 +5,7 @@ from functools import cache
 from src.models import ApiResponse
 from src.agent import ChessAgent
 from src.tools import get_best_move
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @cache
@@ -14,6 +15,18 @@ def get_agent() -> ReActAgent:
 
 app = FastAPI(title="Chess Mentor API")
 
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def get_health():
