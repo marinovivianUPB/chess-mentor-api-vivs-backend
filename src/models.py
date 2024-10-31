@@ -1,9 +1,22 @@
 from pydantic import BaseModel
-import chess
 
-class ApiResponse(BaseModel):
-    message: str
-    data: dict | list | None = None
+class Move(BaseModel):
+    color: int
+    from_square: str
+    to_square: str
+
+class ApiRequest(BaseModel):
+    fen: str
+    language: str = 'en'
+    move: Move | None = None
+    history: list[Move] | None = None
+
+
+class MoveAnalysis(BaseModel):
+    centipawn_score: int
+    win_chance: float
+    comment: str
+
 
 class BoardAnalysis(BaseModel):
     checkers: list
@@ -17,3 +30,9 @@ class PieceState(BaseModel):
     square: str
     attacked_by: list
     attacking: list
+
+
+class ApiResponse(BaseModel):
+    message: str
+    agent_response: str
+    data: Move | BoardAnalysis | MoveAnalysis | None = None

@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from llama_index.core.agent import ReActAgent
 from functools import cache
 
-from src.models import ApiResponse
+from src.models import ApiRequest, ApiResponse
 from src.agent import ChessAgent
 from src.tools import get_best_move
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,14 +15,9 @@ def get_agent() -> ReActAgent:
 
 app = FastAPI(title="Chess Mentor API")
 
-origins = [
-    "http://localhost",
-    "http://localhost:5173",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -34,18 +29,19 @@ def get_health():
 
 
 @app.post("/best-move")
-def calculate_best_move(fen: str, language: str = 'en', agent: ReActAgent = Depends(get_agent)):
-    best_move=get_best_move(fen=fen)
+def calculate_best_move(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
+    best_move=get_best_move(fen=req.fen)
     prompt = f"""
-        Given this position in the chessboard in FEN notation: {fen}.
+        Given this position in the chessboard in FEN notation: {req.fen}.
         Can you provide the next best move I can do, 
         then explain it as a chess master that is teaching me how to improve my games.
-        Summarize your answer in one paragraph in the following language: {language}.
+        Summarize your answer in one paragraph in the following language: {req.language}.
     """
     response = agent.query(prompt)
     return ApiResponse(
         message="Best move calculated succesfully",
-        data={"response": str(response), "best_move": best_move}
+        agent_response=str(response),
+        # data=best_move
     )
 
 

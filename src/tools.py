@@ -52,7 +52,7 @@ def get_best_move(fen: str) -> dict:
     promotion = analysis.get("promotion")
 
     flags = analysis.get("flags")
-    move_type = [move_types[flag] for flag in flags.split("")]
+    move_type = [move_types[flag] for flag in list(flags)]
 
     return {
         "text": text,
