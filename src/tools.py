@@ -10,6 +10,7 @@ def get_stockfish_analysis(fen: str) -> dict:
     response = requests.post("https://chess-api.com/v1", {"fen": fen})
     return response.json()
 
+
 def get_best_move(fen: str) -> dict:
     """
     Get the best move based on the current board state.
@@ -19,7 +20,7 @@ def get_best_move(fen: str) -> dict:
         - dict: The best move to make and addtional information.
     """
     print(f"Getting best move for FEN: {fen}")
-    
+
     piece_types = {
         "p": "pawn",
         "n": "knight",
@@ -66,80 +67,104 @@ def get_best_move(fen: str) -> dict:
     }
 
 
-def analize_position(fen: str) -> dict:
+def get_piece_info(board: chess.Board, square: chess.Square) -> dict:
+    piece = board.piece_at(square)
+    return {
+        "square": square,
+        "position": chess.square_name(square),
+        "piece": piece.symbol(),
+        "color": "white" if piece.color else "black",
+    }
+
+
+def analize_board(fen: str) -> dict:
     """
-    Analize the current board state.
+    Analize the current board state to provide valuable insights.
     Args:
         - fen (str): FEN notation of the current board state.
     Returns:
         - dict: The analysis of the board state.
+    Fields:
+        - turn (str): The color of the player to move.
+        - centipawn_score (int): The centipawn score of the position.
+        - win_chance (float): The win chance of the position (<50 black & >50 white).
+        - checkers (list[dict]): The pieces that are delivering check.
+        - material (dict): The material count for both sides.
+        - pieces_info (list[dict]): The information of each piece on the board.
+        - pawn_structure (dict): The pawn structure for both sides.
     """
     print(f"Analizing position for FEN: {fen}")
 
     analysis = get_stockfish_analysis(fen)
     centipawn_score = analysis["centipawns"]
     win_chance = analysis["winChance"]
-    
+
     board = chess.Board(fen)
     pieces = board.piece_map()
 
+    piece_values = {
+        "p": 1,
+        "n": 3,
+        "b": 3,
+        "r": 5,
+        "q": 9,
+    }
+
+    material = {
+        "white": {"pieces":{}},
+        "black": {"pieces":{}}
+    }
+
+    for square, piece in pieces.items():
+        color = "white" if piece.color else "black"
+        symbol = piece.symbol()
+        if symbol in ["K", "k"]:
+            continue
+        if symbol in material[color]["pieces"]:
+            material[color]["pieces"][symbol]["count"] += 1
+        else:
+            piece_info = {
+                "value": piece_values[symbol.lower()],
+                "count": 1,
+            }
+
+            material[color]["pieces"][symbol] = piece_info
+
+    for color in material:
+        material[color]["total"] = sum(
+            [piece["value"] * piece["count"] for piece in material[color]["pieces"].values()])
+
     checkers = board.checkers()
 
-    # Black attackers
-    black_attackers = []
-    for square in chess.SQUARES:
-        if square in pieces:
-            if pieces[square].color == chess.WHITE:
-                attackers = board.attackers(chess.BLACK, square)
-                black_attackers.append(attackers)
-    
-    # White attackers
-    white_attackers = []
-    for square in chess.SQUARES:
-        if square in pieces:
-            if pieces[square].color == chess.WHITE:
-                attackers = board.attackers(chess.BLACK, square)
-                white_attackers.append(attackers)
+    attackers = {square: [] for square in chess.SQUARES}
+    attacked = {square: [] for square in chess.SQUARES}
 
-    material_count = {
-    "White": sum(1 for piece in board.pieces(chess.PAWN, chess.WHITE)) +
-             sum(3 for piece in board.pieces(chess.KNIGHT, chess.WHITE)) +
-             sum(3 for piece in board.pieces(chess.BISHOP, chess.WHITE)) +
-             sum(5 for piece in board.pieces(chess.ROOK, chess.WHITE)) +
-             sum(9 for piece in board.pieces(chess.QUEEN, chess.WHITE)),
-    "Black": sum(1 for piece in board.pieces(chess.PAWN, chess.BLACK)) +
-             sum(3 for piece in board.pieces(chess.KNIGHT, chess.BLACK)) +
-             sum(3 for piece in board.pieces(chess.BISHOP, chess.BLACK)) +
-             sum(5 for piece in board.pieces(chess.ROOK, chess.BLACK)) +
-             sum(9 for piece in board.pieces(chess.QUEEN, chess.BLACK))
-    }
-
-    white_king_safety = board.is_check() if board.turn == chess.WHITE else None
-    black_king_safety = board.is_check() if board.turn == chess.BLACK else None
+    for square in pieces:
+        attacks = board.attackers(not pieces[square].color, square)
+        for attacker in attacks:
+            attacked[attacker].append(square)
+            attackers[square].append(attacker)
 
     pawn_structure = {
-        "White": list(board.pieces(chess.PAWN, chess.WHITE)),
-        "Black": list(board.pieces(chess.PAWN, chess.BLACK))
+        "white": [chess.square_file(pawn) for pawn in board.pieces(chess.PAWN, chess.WHITE)],
+        "black": [chess.square_file(pawn) for pawn in board.pieces(chess.PAWN, chess.BLACK)],
     }
 
-    center_squares = [chess.D4, chess.D5, chess.E4, chess.E5]
-    control = {
-        "White": [square for square in center_squares if board.attackers(chess.WHITE, square)],
-        "Black": [square for square in center_squares if board.attackers(chess.BLACK, square)]
-    }
-    
+    pieces_info = [get_piece_info(board, square) for square in pieces.keys()]
+    for pi in pieces_info:
+        pi["attacked_by"] = [get_piece_info(board, square) for square in attackers[pi["square"]]]
+        pi["attacking"] = [get_piece_info(board, square) for square in attacked[pi["square"]]]
+
     return {
+        "turn": "white" if board.turn else "black",
         "centipawn_score": centipawn_score,
         "win_chance": win_chance,
-        "checkers": checkers,
-        "black_attackers": black_attackers,
-        "white_attackers": white_attackers,
-        "material_count": material_count,
-        "white_king_safety": white_king_safety,
-        "black_king_safety": black_king_safety,
+        "checkers": [get_piece_info(board, square) for square in checkers],
+        "material": material,
+        "pieces_info": pieces_info,
         "pawn_structure": pawn_structure,
-        "control": control
     }
+
 
 def analize_move(fen: str, move: str) -> dict:
     """
@@ -151,28 +176,33 @@ def analize_move(fen: str, move: str) -> dict:
         - dict: The analysis of the move made.
     """
     print(f"Analizing move {move} from FEN: {fen}")
-    
-    prev_analysis = analize_position(fen)
+
+    prev_analysis = analize_board(fen)
     board = chess.Board(fen)
     board.push_san(move)
     new_fen = board.fen()
-    new_analysis = analize_position(new_fen)
+    new_analysis = analize_board(new_fen)
 
     centipawn_score_diff = new_analysis["centipawn_score"] - prev_analysis["centipawn_score"]
     win_chance_diff = new_analysis["win_chance"] - prev_analysis["win_chance"]
 
-    material_count_diff = {
-        "White": new_analysis["material_count"]["White"] - prev_analysis["material_count"]["White"],
-        "Black": new_analysis["material_count"]["Black"] - prev_analysis["material_count"]["Black"]
+    material_diff = {
+        "white": new_analysis["material"]["white"]["total"] - prev_analysis["material"]["white"]["total"],
+        "black": new_analysis["material"]["black"]["total"] - prev_analysis["material"]["black"]["total"]
     }
 
     return {
         "centipawn_score_diff": centipawn_score_diff,
         "win_chance_diff": win_chance_diff,
-        "material_count_diff": material_count_diff
+        "material_diff": material_diff,
+        "prev_analysis": prev_analysis,
+        "new_analysis": new_analysis,
     }
 
 
-best_move_tool = FunctionTool.from_defaults(fn=get_best_move, return_direct=False)
-analize_position_tool = FunctionTool.from_defaults(fn=analize_position, return_direct=False)
-analize_move_tool = FunctionTool.from_defaults(fn=analize_move, return_direct=False)
+best_move_tool = FunctionTool.from_defaults(
+    fn=get_best_move, return_direct=False)
+analize_board_tool = FunctionTool.from_defaults(
+    fn=analize_board, return_direct=False)
+analize_move_tool = FunctionTool.from_defaults(
+    fn=analize_move, return_direct=False)

@@ -8,7 +8,7 @@ class Move(BaseModel):
 class ApiRequest(BaseModel):
     fen: str
     language: str = 'en'
-    move: Move | None = None
+    next_move: Move | None = None
     history: list[Move] | None = None
 
 
@@ -35,4 +35,4 @@ class PieceState(BaseModel):
 class ApiResponse(BaseModel):
     message: str
     agent_response: str
-    data: Move | BoardAnalysis | MoveAnalysis | None = None
+    data: Move | BoardAnalysis | MoveAnalysis | dict | None = None

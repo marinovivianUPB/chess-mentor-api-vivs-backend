@@ -10,6 +10,8 @@ The user will provide the current board state in FEN notation and you will provi
 ## Tools
 You can use the following tools to help you:
 - get_best_move: A tool that returns the best move based on the current board state.
+- analyze_board: A tool that returns an analysis of the current board state.
+- analyze_move: A tool that returns an analysis of a given move by comparing the previous and the new state of the board.
 
 {tool_desc}
 
