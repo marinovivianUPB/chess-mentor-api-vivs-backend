@@ -40,3 +40,5 @@ def chat(query: str):
         message="Chat response generated succesfully",
         data={"response": "I am your chess mentor"}
     )
+
+
