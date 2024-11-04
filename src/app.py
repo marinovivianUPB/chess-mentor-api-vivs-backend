@@ -86,8 +86,11 @@ def analyze_player(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
     )
 
 @app.post("/chat")
-def chat(query: str):
+def chat(message: str, agent: ReActAgent = Depends(get_agent)):
+    response = agent.chat(message)
     return ApiResponse(
         message="Chat response generated succesfully",
-        data={"response": "I am your chess mentor"}
+        agent_response=str(response)
     )
+
+
