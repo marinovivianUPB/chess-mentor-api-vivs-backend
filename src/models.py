@@ -1,38 +1,30 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
 
 class Move(BaseModel):
-    color: int
-    from_square: str
-    to_square: str
+    color: str
+    flags: str
+    from_square: str = Field(alias='from')
+    to_square: str = Field(alias='to')
+    piece: str
+    san: str
+
 
 class ApiRequest(BaseModel):
     fen: str
+    player: int = 1
     language: str = 'en'
     next_move: Move | None = None
     history: list[Move] | None = None
 
 
-class MoveAnalysis(BaseModel):
+class BoardAnalysis(BaseModel):
+    winning: int
     centipawn_score: int
     win_chance: float
-    comment: str
-
-
-class BoardAnalysis(BaseModel):
-    checkers: list
-    black_attackers: list
-    white_attackers: list
-
-class PieceState(BaseModel):
-    id: int
-    type: str
-    color: str
-    square: str
-    attacked_by: list
-    attacking: list
 
 
 class ApiResponse(BaseModel):
     message: str
     agent_response: str
-    data: Move | BoardAnalysis | MoveAnalysis | dict | None = None
+    data: Move | BoardAnalysis | None = None

@@ -5,7 +5,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from src.prompts import agent_prompt_text
 from src.config import get_agent_settings
-from src.tools import best_move_tool, analize_move_tool, analize_board_tool
+from src.tools import best_move_tool, analize_move_tool, analize_board_tool, analize_player_tool
 
 SETTINGS = get_agent_settings()
 
@@ -21,6 +21,7 @@ class ChessAgent:
                 best_move_tool,
                 analize_move_tool,
                 analize_board_tool,
+                analize_player_tool,
             ],
             verbose=True,
         )

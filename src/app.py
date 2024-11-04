@@ -32,10 +32,10 @@ def get_health():
 def calculate_best_move(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
     best_move=get_best_move(fen=req.fen)
     prompt = f"""
-        Given this position in the chessboard in FEN notation: {req.fen}.
+        Given this position in the chessboard in FEN notation: "{req.fen}".
         Can you provide the next best move I can do, 
         then explain it as a chess master that is teaching me how to improve my games.
-        Summarize your answer in one paragraph in the following language: {req.language}.
+        Summarize your answer in one short paragraph in the following language: {req.language}.
     """
     response = agent.query(prompt)
     return ApiResponse(
@@ -47,24 +47,18 @@ def calculate_best_move(req: ApiRequest, agent: ReActAgent = Depends(get_agent))
 @app.post("/state")
 def calculate_board_state(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
     prompt = f"""
-        Given this position in the chessboard in FEN notation: {req.fen}.
-        Can you provide an analisys of the current board state, take on account the following aspects: 
-        - The amount of material for both sides
-        - The pieces that are active
-        - The pieces that are delivering check
-        - The pieces that are under attack for both sides
-        - The pieces that are attacking for both sides
-        - The pieces that are pinned
-        - The pieces that are defending other pieces
-        - The pieces that are undefended
-        - The pawn structure
+        Given this position in the chessboard in FEN notation: "{req.fen}".
+        Provide an analisys of the current board state.
 
-        Once you have this information, please explain it as a chess master that is teaching me how to improve my games.
+        Once you have the information you need, please explain it as a chess master that is teaching me how to improve my games.
         I want to understand the board state and how to take advantage of it.
         Please tell me the strategy I should follow to win the game.
 
-        Summarize your answer in a small list containing the main insights of the game
-        and each item should be at most a paragraph, I only need information that is relevant to my chess learning process.
+        Summarize your answer in a small list containing the main insights of the game, make sure each line is a relevant insight only, 
+        not trivial information, and each item should be at most 2 lines, 
+        I only need information that is relevant to my chess learning process, so avoid trivial information.
+        Don't use markdown or any other special formatting, just plain text.
+        Don't use specific values, just general insights about the board state.
         Use this language for your answer: {req.language}.
     """
     response = agent.query(prompt)
@@ -73,10 +67,22 @@ def calculate_board_state(req: ApiRequest, agent: ReActAgent = Depends(get_agent
         agent_response=str(response),
     )
 
-@app.post("/analysis")
-def analyze_match(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
+@app.post("/player")
+def analyze_player(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
+    player = "white" if req.player == 1 else "black"
+    prompt = f"""
+        Given the following moves: {req.history}.
+        Analyze the game state for each movement of the player {player} represented by {req.player},
+        for this use the san moves: {[move.san for move in req.history]}.
+        Provide a short paragraph explaining how the player is playing during the match.
+        Don't use markdown or any other special formatting, just plain text.
+        Don't use specific values, just general insights about the player's strategy.
+        Use this language for your answer: {req.language}.
+    """
+    response = agent.query(prompt)
     return ApiResponse(
         message="Match analysis generated succesfully",
+        agent_response=str(response),
     )
 
 @app.post("/chat")

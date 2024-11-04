@@ -6,7 +6,7 @@ import chess
 
 @cache
 def get_stockfish_analysis(fen: str) -> dict:
-    print(f"Getting best move for FEN: {fen}")
+    print(f"Getting Stockfish analysis for FEN: {fen}")
     response = requests.post("https://chess-api.com/v1", {"fen": fen})
     return response.json()
 
@@ -199,6 +199,35 @@ def analize_move(fen: str, move: str) -> dict:
         "new_analysis": new_analysis,
     }
 
+def analyze_player(player: int, moves: list[str]) -> list[dict]:
+    """
+    Simulate the game to provide insights on the game state for each movement.
+    Args:
+        - player (int): The player to analyze (0: black, 1: white).
+        - moves (list[str]): The list of moves made in algebraic notation.
+    Returns:
+        - list[dict]: The winning state for each movement.
+    """
+    print(f"Analizing player movements: {moves}")
+    game = chess.Board()
+    analysis_res = []
+    for move in moves:
+        game.push_san(move)
+        if game.turn == player:
+            continue
+        analysis = get_stockfish_analysis(game.fen())
+        centipawn_score = analysis["centipawns"]
+        win_chance = analysis["winChance"]
+        if player == 0:
+            win_chance = 100 - win_chance
+        analysis_res.append({
+            "move": move,
+            "centipawn_score": centipawn_score,
+            "win_chance": win_chance,
+            "state": "winning" if win_chance > 75 else "lossing" if win_chance < 25 else "even",
+        })
+
+    return analysis
 
 best_move_tool = FunctionTool.from_defaults(
     fn=get_best_move, return_direct=False)
@@ -206,3 +235,5 @@ analize_board_tool = FunctionTool.from_defaults(
     fn=analize_board, return_direct=False)
 analize_move_tool = FunctionTool.from_defaults(
     fn=analize_move, return_direct=False)
+analize_player_tool = FunctionTool.from_defaults(
+    fn=analyze_player, return_direct=False)
