@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from llama_index.core.agent import ReActAgent
 from functools import cache
 
-from src.models import ApiRequest, ApiResponse
+from src.models import ApiRequest, ApiResponse, Move
 from src.agent import ChessAgent
 from src.tools import get_best_move
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,7 +41,7 @@ def calculate_best_move(req: ApiRequest, agent: ReActAgent = Depends(get_agent))
     return ApiResponse(
         message="Best move calculated succesfully",
         agent_response=str(response),
-        # data=best_move
+        data=best_move
     )
 
 @app.post("/state")

@@ -27,4 +27,4 @@ class BoardAnalysis(BaseModel):
 class ApiResponse(BaseModel):
     message: str
     agent_response: str
-    data: Move | BoardAnalysis | None = None
+    data: dict | None = None
