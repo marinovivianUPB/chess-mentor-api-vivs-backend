@@ -57,10 +57,10 @@ def calculate_board_state(req: ApiRequest, agent: ReActAgent = Depends(get_agent
         Please tell me the strategy I should follow to win the game.
 
         Summarize your answer in a small list containing the main insights of the game, make sure each line is a relevant insight only,
-        not trivial information, and each item should be at most 2 lines,
-        I only need information that is relevant to my chess learning process, so avoid trivial information.
+        not trivial information, 5 items are enough and each item should be at most 1 line.
         Don't use markdown or any other special formatting, just plain text.
         Don't use specific values, just general insights about the board state.
+        Don't make a comment at the end of the list, just the insights IMPORTANT.
         Use this language for your answer: {req.language}.
     """
     response = agent.query(prompt)
@@ -80,6 +80,7 @@ def analyze_player(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
         Provide a short paragraph explaining how the player is playing during the match.
         Don't use markdown or any other special formatting, just plain text.
         Don't use specific values, just general insights about the player's strategy.
+        Don't use chess notation, translate it to pieces movements in natural language IMPORTANT.
         Use this language for your answer: {req.language}.
     """
     response = agent.query(prompt)
