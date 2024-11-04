@@ -27,4 +27,7 @@ class BoardAnalysis(BaseModel):
 class ApiResponse(BaseModel):
     message: str
     agent_response: str
-    data: dict | None = None
+    data: dict | list | None = None
+
+class ChatApiRequest(BaseModel):
+    message: str
