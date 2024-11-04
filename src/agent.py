@@ -8,7 +8,6 @@ from src.config import get_agent_settings
 from src.tools import best_move_tool, chess_expert_tool
 
 SETTINGS = get_agent_settings()
-print("API Key:", SETTINGS.openai_api_key)  # Solo para verificación temporal
 
 llm = OpenAI(model=SETTINGS.openai_model, api_key=SETTINGS.openai_api_key)
 embed_model = HuggingFaceEmbedding(model_name=SETTINGS.hf_embeddings_model)

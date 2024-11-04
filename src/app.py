@@ -28,21 +28,6 @@ def get_health():
     return "Server is running"
 
 
-@app.post("/best-move")
-def calculate_best_move(fen: str, language: str = 'en', agent: ReActAgent = Depends(get_chat_agent)):
-    prompt = f"""
-        Given this position in the chessboard in FEN notation: {fen}.
-        Can you provide the next best move I can do, 
-        then explain it as a chess master that is teaching me how to improve my games.
-        Summarize your answer in one paragraph in the following language: {language}.
-    """
-    response = agent.query(prompt)
-    return ApiResponse(
-        message="Best move calculated succesfully",
-        data={"response": str(response)}
-    )
-
-
 @app.post("/chat")
 def chat(req: ChatApiRequest, agent: ReActAgent = Depends(get_chat_agent)):
     response = agent.chat(req.message)
