@@ -2,16 +2,25 @@ from fastapi import FastAPI, Depends
 from llama_index.core.agent import ReActAgent
 from functools import cache
 
-from src.models import ApiResponse
-from src.agent import ChessAgent
+from src.models import ApiResponse, ChatApiRequest
+from src.agent import MagnusAgent
+
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @cache
-def get_agent() -> ReActAgent:
-    return ChessAgent().get_agent()
+def get_chat_agent() -> ReActAgent:
+    return MagnusAgent().get_agent()
 
 
 app = FastAPI(title="Chess Mentor API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
@@ -20,7 +29,7 @@ def get_health():
 
 
 @app.post("/best-move")
-def calculate_best_move(fen: str, language: str = 'en', agent: ReActAgent = Depends(get_agent)):
+def calculate_best_move(fen: str, language: str = 'en', agent: ReActAgent = Depends(get_chat_agent)):
     prompt = f"""
         Given this position in the chessboard in FEN notation: {fen}.
         Can you provide the next best move I can do, 
@@ -35,10 +44,11 @@ def calculate_best_move(fen: str, language: str = 'en', agent: ReActAgent = Depe
 
 
 @app.post("/chat")
-def chat(query: str):
+def chat(req: ChatApiRequest, agent: ReActAgent = Depends(get_chat_agent)):
+    response = agent.chat(req.message)
     return ApiResponse(
         message="Chat response generated succesfully",
-        data={"response": "I am your chess mentor"}
+        data={"response": response}
     )
 
 
