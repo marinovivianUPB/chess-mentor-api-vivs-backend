@@ -14,13 +14,6 @@ def get_agent() -> ReActAgent:
 
 
 app = FastAPI(title="Chess Mentor API")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,6 +22,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/")
 def get_health():
@@ -37,10 +31,10 @@ def get_health():
 
 @app.post("/best-move")
 def calculate_best_move(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
-    best_move=get_best_move(fen=req.fen)
+    best_move = get_best_move(fen=req.fen)
     prompt = f"""
         Given this position in the chessboard in FEN notation: "{req.fen}".
-        Can you provide the next best move I can do, 
+        Can you provide the next best move I can do,
         then explain it as a chess master that is teaching me how to improve my games.
         Summarize your answer in one short paragraph in the following language: {req.language}.
     """
@@ -50,6 +44,7 @@ def calculate_best_move(req: ApiRequest, agent: ReActAgent = Depends(get_agent))
         agent_response=str(response),
         data=best_move
     )
+
 
 @app.post("/state")
 def calculate_board_state(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
@@ -61,8 +56,8 @@ def calculate_board_state(req: ApiRequest, agent: ReActAgent = Depends(get_agent
         I want to understand the board state and how to take advantage of it.
         Please tell me the strategy I should follow to win the game.
 
-        Summarize your answer in a small list containing the main insights of the game, make sure each line is a relevant insight only, 
-        not trivial information, and each item should be at most 2 lines, 
+        Summarize your answer in a small list containing the main insights of the game, make sure each line is a relevant insight only,
+        not trivial information, and each item should be at most 2 lines,
         I only need information that is relevant to my chess learning process, so avoid trivial information.
         Don't use markdown or any other special formatting, just plain text.
         Don't use specific values, just general insights about the board state.
@@ -73,6 +68,7 @@ def calculate_board_state(req: ApiRequest, agent: ReActAgent = Depends(get_agent
         message="Board state generated succesfully",
         agent_response=str(response),
     )
+
 
 @app.post("/player")
 def analyze_player(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
@@ -92,12 +88,11 @@ def analyze_player(req: ApiRequest, agent: ReActAgent = Depends(get_agent)):
         agent_response=str(response),
     )
 
+
 @app.post("/chat")
 def chat(req: ChatApiRequest, agent: ReActAgent = Depends(get_agent)):
     response = agent.chat(req.message)
     return ApiResponse(
         message="Chat response generated succesfully",
-        data={"response": response}
+        agent_response=str(response),
     )
-
-
