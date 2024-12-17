@@ -1,4 +1,4 @@
-name: Desplegando en nginx ec2
+name: Desplegando backend en ec2
 on:
   workflow_dispatch:
     inputs:
